@@ -13,7 +13,7 @@
 % Select program (ppgc, pgmicro, cic, ecp, ppgl) and document type
 % (diss/mestrado, tese/doutorado, tc/dipl, ti, rp, espec, pep, prop-tese,
 %  plano-doutorado).  Add `english' for English-language documents.
-\documentclass[ppgc,diss,english]{infufrgs}
+\documentclass[ppgc,pep,english]{infufrgs}
 
 % If using pdfLaTeX, declare the input encoding (UTF-8 is recommended).
 % Not needed with XeLaTeX or LuaLaTeX.
@@ -28,7 +28,7 @@
 %------------------------------------------------------------------------------
 % Document metadata
 %------------------------------------------------------------------------------
-\title{Um Exemplo de Monografia do Instituto de Informática da UFRGS}
+\title{Um Exemplo de PEP}
 \translatedtitle{Using \LaTeX\ to Prepare Documents at INF/UFRGS}
 
 % Author: \author{Surname}{First Name(s)}
@@ -134,8 +134,7 @@
 \chapter{Introdução}
 
 Este capítulo introduz o tema do trabalho.  Citações bibliográficas seguem a
-norma ABNT; por exemplo, a linguagem \LaTeX\ foi descrita por
-\cite{lamport1994latex}.
+norma ABNT; por exemplo, a linguagem \LaTeX\ foi descrita por \cite{abdulah_accelerating_2022}.
 
 Figuras devem ser referenciadas pelo número (Figura~\ref{fig:exemplo}).
 
@@ -218,6 +217,6 @@ Anexos contêm material de terceiros reproduzido para documentação.
 % References (ABNT author-date style)
 %------------------------------------------------------------------------------
 \bibliographystyle{abntex2-alf}
-\bibliography{infufrgs-example}
+\bibliography{references}
 
 \end{document}

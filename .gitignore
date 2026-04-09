@@ -1,4 +1,5 @@
 infufrgs
+erad-paper.tex
 *.aux
 *.lof
 *.log
@@ -6,3 +7,8 @@ infufrgs
 *.out
 *.pdf
 *.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
