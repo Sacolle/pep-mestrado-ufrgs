@@ -123,16 +123,14 @@
 %   \item[$\alpha$] Alpha coefficient
 % \end{listofsymbols}
 
-%==============================================================================
-% Text body
-%==============================================================================
-
 \chapter{Introdução e Motivação}
 \label{cap:introducao}
 
-* Base
+Parques de computação de alto desenpenho tem se tornados mais complexos a medida dos anos. Já faz um tempo que deixaram de ser uma coleção de CPUs e se tornaram uma estrutura mista CPU-GPU. O futuro prevê ainda mais heterogenidade de arquiteturas, com aceleradores de hardwares cada vez mais específicos aos domínios das aplicações. Isso gera uma coleção de processadores distintos, que requer cada vez mais do programador para conseguir extrair 100\% dos recursos disponíveis.
 
-Posso extrair muito do paper de ERAD, mas isso é uma forma de não pensar no que precisa nessa introdução. Acho importante citá-lo, dizer que eu enviei para o ERAD/RS 2026 um artigo sobre a minha pesquisa, mas ela é um pouco mais fechada do que o PEP precisa ser.
+Uma das soluções desse problema são os modelos de fluxo de tarefas sequenciais (STF - \textit{Sequential Task Flow}). Neles, a execução é segmentada em tarefas com dependências explícitas, sendo executadas assíncronamente com respeito as dependências. Nisso, uma execução pode submeter a tarefa $A$ que opera sobre o recurso $x$ e depois submeter a tarefa $B$ que depende desse mesmo recurso. A tarefa $B$ só será realizada quando a tarefa $A$ executar, pois a dependência de $B$ é uma entrada de $A$ e este foi submetido primeiro, nisso a parte sequencial de STF. A divisão em tarefas permite que estas possam ter implementações váriadas para diferentes arquiteturas, podendo uma tarefa $A$ ser implementada para CPU e GPU, não alterando o fluxo do modelo. Com isso, modelos de execução de STF precisam incorporar estratégias de escalonamento de recursos e transferência de memória para eficientemente utilizarem os recursos disponíveis. Dentre esses modelos está o PaRSEC \cite{bosilca_parsec_2013} e StarPU \cite{starpu-paper}, este sendo usado no trabalho devido as suas capacidades mais robustas de escalonamento e transferência de memória. O modelo STF 
+
+
 
 ** O que é?
 
