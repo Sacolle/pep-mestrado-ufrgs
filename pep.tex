@@ -13,7 +13,7 @@
 % Select program (ppgc, pgmicro, cic, ecp, ppgl) and document type
 % (diss/mestrado, tese/doutorado, tc/dipl, ti, rp, espec, pep, prop-tese,
 %  plano-doutorado).  Add `english' for English-language documents.
-\documentclass[ppgc,pep,english]{infufrgs}
+\documentclass[ppgc,pep]{infufrgs}
 
 % If using pdfLaTeX, declare the input encoding (UTF-8 is recommended).
 % Not needed with XeLaTeX or LuaLaTeX.
@@ -25,19 +25,21 @@
 % Optionally load math packages
 % \usepackage{amsmath}
 
+\newcommand{\StarFletch}{Star-Fletcher}
+
 %------------------------------------------------------------------------------
 % Document metadata
 %------------------------------------------------------------------------------
-\title{Um Exemplo de PEP}
-\translatedtitle{Using \LaTeX\ to Prepare Documents at INF/UFRGS}
+\title{Título PEP TBD }
+\translatedtitle{Title PEP TBD}
 
 % Author: \author{Surname}{First Name(s)}
-\author{Flaumann}{Fritz Gutenberg}
+\author{Boniatti Colle}{Pedro Henrique}
 % Multiple authors are supported:
 %\author{Flaumann}{Frida Gutenberg}
 
 % Advisor (title is optional): \advisor[Title]{Surname}{First Name(s)}
-\advisor[Prof.~Dr.]{Lamport}{Leslie}
+\advisor[Prof.~Dr.]{Mello Schnorr}{Lucas}
 % Co-advisor is optional:
 %\coadvisor[Prof.~Dr.]{Knuth}{Donald Ervin}
 
@@ -50,6 +52,7 @@
 %------------------------------------------------------------------------------
 % Keywords — use Title Case; up to 10 keywords per language
 %------------------------------------------------------------------------------
+% TODO:
 \keyword{Ciência da Computação}
 \keyword{Formatação de documentos}
 \keyword{LaTeX}
@@ -75,6 +78,7 @@
 %------------------------------------------------------------------------------
 % Optional front matter
 %------------------------------------------------------------------------------
+% TODO:
 \begin{dedicatoria}
   À minha família.
 \end{dedicatoria}
@@ -87,22 +91,14 @@
 % Abstract in the primary language
 %------------------------------------------------------------------------------
 \begin{abstract}
-  Este documento demonstra o uso da classe \textit{infufrgs} para a preparação
-  de monografias, dissertações e teses no Instituto de Informática da UFRGS.
-  A classe fornece formatação automática da folha de rosto, sumário, listas de
-  figuras e tabelas, referências no padrão ABNT e outros elementos
-  pré-textuais e pós-textuais.
+	Resumo em português
 \end{abstract}
 
 %------------------------------------------------------------------------------
 % Abstract in the second language (translatedabstract)
 %------------------------------------------------------------------------------
 \begin{translatedabstract}
-  This document demonstrates the use of the \textit{infufrgs} class for
-  preparing monographs, dissertations and theses at the Institute of
-  Informatics of UFRGS.  The class provides automatic formatting of the
-  title page, table of contents, lists of figures and tables, ABNT-style
-  references, and other front- and back-matter elements.
+	In english
 \end{translatedabstract}
 
 %------------------------------------------------------------------------------
@@ -131,74 +127,96 @@
 % Text body
 %==============================================================================
 
-\chapter{Introdução}
+\chapter{Introdução e Motivação}
+\label{cap:introducao}
 
-Este capítulo introduz o tema do trabalho.  Citações bibliográficas seguem a
-norma ABNT; por exemplo, a linguagem \LaTeX\ foi descrita por \cite{abdulah_accelerating_2022}.
+* Base
 
-Figuras devem ser referenciadas pelo número (Figura~\ref{fig:exemplo}).
+Posso extrair muito do paper de ERAD, mas isso é uma forma de não pensar no que precisa nessa introdução. Acho importante citá-lo, dizer que eu enviei para o ERAD/RS 2026 um artigo sobre a minha pesquisa, mas ela é um pouco mais fechada do que o PEP precisa ser.
 
-\begin{figure}[htbp]
-  \centering
-  \fbox{\rule{0pt}{4cm}\rule{6cm}{0pt}}
-  \caption{Exemplo de figura com legenda centralizada.}
-  \label{fig:exemplo}
-\end{figure}
+** O que é?
 
-\section{Organização do Texto}
+O mestrado visa a implementação e avaliação do programa \StarFletch, uma implementação da etapa de propagação a frente do algoritmo Fletcher de RTM usando o modelo de STF para gerir o paralelismo. \cite{alonazi_asynchronous_2019}
 
-O restante deste documento está organizado da seguinte forma.  O
-Capítulo~\ref{cap:fundamentacao} apresenta a fundamentação teórica.
-O Capítulo~\ref{cap:conclusao} apresenta as conclusões.
+Explicar RTM
 
-\chapter{Fundamentação Teórica}
-\label{cap:fundamentacao}
+Explicar STF
+Falar desse cara\cite{leandro_nesi_task-based_2020}
 
-\section{Formatação}
+** Por que fazer isso?
 
-A classe \texttt{infufrgs} herda da classe \texttt{report} do \LaTeX.  As
-margens, o espaçamento entre linhas, a numeração de páginas e os títulos de
-capítulos e seções são configurados automaticamente de acordo com as normas
-do Instituto.
+O modelo de STF tem muito potencial nos nossos parques de alto desempenho cada vez mais heterogêneos. O RTM é um bom caso de teste, pois é um objeto de interesse de parceiros da UFRGS, como também tem espaços não explorados quanto a paralelização multi-máquina inter-shoot. ??? 
 
-\subsection{Tabelas}
 
-Tabelas devem ter título acima do corpo e ser referenciadas no texto
-(Tabela~\ref{tab:exemplo}).
+O STF apresenta outros benefícios específicos a essa implementação, permitindo estratégias de Tiling \cite{qu_exploiting_2023} (e outras), IO (achar as citações, o do alonazi é uma otimização de IO)
 
-\begin{table}[htbp]
-  \centering
-  \caption{Exemplo de tabela com legenda centralizada.}
-  \label{tab:exemplo}
-  \begin{tabular}{lcc}
-    \hline
-    \textbf{Coluna A} & \textbf{Coluna B} & \textbf{Coluna C} \\
-    \hline
-    Linha 1 & 1.0 & 2.0 \\
-    Linha 2 & 3.0 & 4.0 \\
-    \hline
-  \end{tabular}
-\end{table}
+Mix precision \cite{abdulah_accelerating_2022}
 
-\subsubsection{Citações longas}
+Compression (pegar a citação da compressão)
 
-Citações com mais de três linhas devem ser destacadas em bloco, com recuo de
-4\,cm à esquerda:
+Com facilidade
 
-\begin{quote}
-  Esta é uma citação longa de exemplo.  O ambiente \texttt{quote} da classe
-  \texttt{infufrgs} aplica automaticamente o recuo, o tamanho de fonte e o
-  espaçamento simples exigidos pela norma.
-\end{quote}
+(nesse ponto o reuso do ERAD é bom, claro que ele está reduzido, mas é útil notheless)
+
+
+\chapter{Objetivos e Resultados Esperados}
+\label{cap:objetivos}
+
+** O que queremos com isso?
+
+Demonstrar que uma implementação de RTM usando STF em primeira ordem é competitivo e possivelmente superior com implementações MPI-CUDA do mesmo programa. Além disso, mesmo com ganhos marginais, demonstrar a simplicidade do sistema STF em orquestrar grandes execuções.
+
+** Quais resultados esperamos obter?
+
+A métrica utilizada na industria é Msamples/s processadas. Esperamos obter uma quantidade superior de Msamples/s do que as versões mais tradicionais do fletcher, assim como possibilitar execuções maiores que utilizem os recursos totais mais eficientemente e mais plenamente, com menos configuração.
+
+\chapter{Metodologia do Trabalho}
+\label{cap:metodologia}
+
+** Como iremos obter esses resultados?
+
+Usando o PCAD. Talvez o Santos Dumond
+
+\chapter{Progresso Atual e Cronograma}
+\label{cap:cronograma}
+
+** O que já foi feito?
+
+Implementado o Sistema RTM \textit{CPU only} usando o STF do StarPU
+
+Realizado testes comparativos em \textit{CPU only} com uma implementação com paralelismo OpenMP, averiguando uma paridade de desempenho.
+
+** O que ainda temos que realizar?
+
+Finalizar os testes de Msamples/s para a execução só em CPU do Star-Fletcher.
+
+Implementar em GPU a execução do Star-Fletcher.
+
+Implementar execução MPI para o programa. Sendo essa mais distante, não sei quais desafios serão encontrados. A expectativa é que o StarPU seja capaz de mascarar as comunicações, não fazendo necessária a implementação de um sistema de halo ou associado, que aumentaria o tempo de desenvolvimento e a complexidade.
+
+*** Considerações da implementação em GPU
+
+Qual o melhor modo de passar a execução? Usar a função tal qual está ou fazer um packing dos dados antes de mandar para a GPU?
+
+Como isso afeta o scheaduling de execuções em CPU? Será que elas ser tornarão um bottleneck? Se sim, há como fazer a segmentação dinâmica para a CPU. Será necessária essa implementação?
+
+Ou seja, primeiro temos que implementar a versão trivial e compara-lá com a versão em GPU do Fletcher-Base. Analisar os dados e bifurcar a partir desse ponto. Realizar a implementação com packing se a task na GPU está muito lenta, adicionar segmentação em blocos CPU se eles estão segurando a execução, assim como outras ideias que podem surgir.
+
+** Quando iremos realizar as tarefas?
+
+Man, idk.
 
 \chapter{Conclusão}
 \label{cap:conclusao}
 
-Este documento demonstrou os principais recursos da classe \texttt{infufrgs}.
+** Considerações sobre o trabalho e velocidade de desenvolvimento.
 
-%==============================================================================
-% Back matter
-%==============================================================================
+Mencionar o trabalho de professor.
+
+Mencionar a viagem para a França e o projeto associado.
+
+
+
 
 % Appendices start with \appendix (optional \annexname for annexes)
 \appendix
