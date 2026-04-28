@@ -26,6 +26,7 @@
 % \usepackage{amsmath}
 
 \newcommand{\StarFletch}{Star-Fletcher}
+\newcommand{\FletchBase}{Fletcher-Base}
 
 %------------------------------------------------------------------------------
 % Document metadata
@@ -130,58 +131,39 @@ Parques de computação de alto desempenho tem se tornados mais complexos a medi
 
 Uma das soluções desse problema são os modelos de fluxo de tarefas sequenciais (STF - \textit{Sequential Task Flow}). Neles, a execução é segmentada em tarefas com dependências explícitas, sendo executadas assincronamente com respeito as dependências. Nisso, uma execução pode submeter a tarefa $A$ que opera sobre o recurso $x$ e depois submeter a tarefa $B$ que depende desse mesmo recurso. A tarefa $B$ só será realizada quando a tarefa $A$ executar, pois a dependência de $B$ é uma entrada de $A$ e este foi submetido primeiro, nisso a parte sequencial de STF. A divisão em tarefas permite que estas possam ter implementações variadas para diferentes arquiteturas, podendo uma tarefa $A$ ser implementada para CPU e GPU, não alterando o fluxo do modelo. Com isso, modelos de execução de STF precisam incorporar estratégias de escalonamento de recursos e transferência de memória para eficientemente utilizarem os recursos disponíveis. Dentre esses modelos está o PaRSEC \cite{bosilca_parsec_2013} e StarPU \cite{starpu-paper}, este sendo usado no trabalho devido as suas capacidades mais robustas de escalonamento e transferência de memória. 
 
-O modelo STF já foi utilizado com sucesso em programas de diferentes domínios como resolvedores de álgebra linear densa \cite{abdulah_accelerating_2022}, computação de dinâmica de fluidos (CFD - \textit{Computational Fluid Dynamics}) \cite{couteyen_carpaye_design_2018,leandro_nesi_task-based_2020} e aplicações de migração reversa no tempo (RTM - \textit{Reverse Time Migration}) para análise sísmica \cite{boillot_task-based_2014,alonazi_asynchronous_2019}. Esse último caso, trata-se de um algoritmo usado na exploração de óleo e gás para encontrar depósitos subsuperficiais de recursos geológicos, tal qual óleo e gás. 
+O modelo STF já foi utilizado com sucesso em programas de diferentes domínios como resolvedores de álgebra linear densa \cite{abdulah_accelerating_2022}, computação de dinâmica de fluidos (CFD - \textit{Computational Fluid Dynamics}) \cite{couteyen_carpaye_design_2018,leandro_nesi_task-based_2020} e aplicações de migração reversa no tempo (RTM - \textit{Reverse Time Migration}) para análise sísmica \cite{boillot_task-based_2014,alonazi_asynchronous_2019}. Esse último caso, trata-se de um algoritmo usado na exploração de óleo e gás para encontrar depósitos subsuperficiais de recursos geológicos, tal qual óleo e gás. Nele, ondas gravadas por geofones em campo são reproduzidas e propagadas em função do tempo. O estado computado é periodicamente salvo. Depois de $n$ execuções, executa-se na direção contrária ao tempo, reproduzindo os estados salvos e movendo a onda contra o tempo. No fim, obtém-se uma imagem parcial do espaço analisado. Esse processo é repedido várias vezes, sendo cada uma chamada de \textit{shot}, e, no fim, as imagens parciais são combinadas em uma visualização final do meio estudado, podendo-se então localizar com precisão depósitos subsuperficiais de gás ou óleo.
 
-(junta com o de cima)
-Nele, ondas gravadas por (NOME DA FERRAMENTA DE CAPTURA) são reproduzidas e propagadas em função do tempo, salvando o estado do volume periodicamente. Depois de $n$ execuções, executa-se na direção contrária ao tempo, reproduzindo os estados salvos e movendo a onda no sentido contrário. No fim, obtém-se uma imagem parcial do espaço analisado. Esse processo é repedido várias vezes, sendo cada uma chamada de \textit{shot}, e, no fim, as imagens parciais são combinadas em uma visualização final do meio estudado, podendo-se então localizar com precisão depósitos subsuperficiais de gás ou óleo. [Reescrever]
+Mesmo com a análise sismica passando de 100 anos e computadores de 80, aplicações RMT só começaram a se popularizar na indústria nos últimos 20 anos por serem muito intensivas computacionalmente. A computação de diferenças finitas sobre volumes pode abrangir bilhões de pontos, com cada um consistindo de várias operações consecutivas. Um volume de $1024 \cross 1024 \cross 1024$, aproximadamente 1 bilão de pontos, guardado em precisão dupla consiste em $8Gb$ de dados. Esse volume de dados e a necessidade de salvar o estado periódicamente torna a aplicação \textit{IO bounded}. Felizmente, aplicações RTM são trivialmente paralelizáveis entre \textit{shots}, não havendo dependência de dados entre eles. O formato de execução desses programas é, então, distribuir um \textit{shot} para cada nodo em um parque de alta performance, computando as diferenças finitas em GPU. Tudo isso requer a coordenação manual da transferência de dados da memória principal a disco, e vice versa, além de limitar a computação de um \textit{shot} por nodo.
 
+** FALAR DE TILING
 
+** PRECISÃO MULTIPLA
 
-** O que é?
+** COMPRESSÃO
 
-O mestrado visa a implementação e avaliação do programa \StarFletch, uma implementação da etapa de propagação a frente do algoritmo Fletcher de RTM usando o modelo de STF para gerir o paralelismo. \cite{alonazi_asynchronous_2019}
-
-Explicar RTM
-
-Explicar STF
-Falar desse cara\cite{leandro_nesi_task-based_2020}
-
-** Por que fazer isso?
-
-O modelo de STF tem muito potencial nos nossos parques de alto desempenho cada vez mais heterogêneos. O RTM é um bom caso de teste, pois é um objeto de interesse de parceiros da UFRGS, como também tem espaços não explorados quanto a paralelização multi-máquina inter-shoot. ??? 
+Este trabalho apresenta \StarFletch, uma implementação de paralelismo de tarefas em primeira ordem para arquiteturas heterôgeneas para solucionar problemas de RTM. O intuito dele é, através do uso da interface do StarPU, simplificar a comunicação de dados, permitindo a execução de \textit{shots} multinodo. Por motivos de simplificação, \StarFletch\ implementa o algoritmo Fletcher \cite{fletcher_reverse_2009} apenas em função do tempo. Para simular a possível próxima etapa, os volumes são salvos em disco, representando o armazenamento para a futura etapa de propagação contrária ao tempo. Essa decisão veio de já existir essa base de meio RTM como um objeto de estudo no INF, permitindo gerar avaliações comparativas de desempenho da versão base, cunhada \FletchBase, com a nova implementação STF, \StarFletch. O intuito final é aumentar as capacidades dos algoritmos RTM, gerando execuções mais rápidas que os modelos padrões da indústrica de execução MPI+CUDA.
 
 
-O STF apresenta outros benefícios específicos a essa implementação, permitindo estratégias de Tiling \cite{qu_exploiting_2023} (e outras), IO (achar as citações, o do alonazi é uma otimização de IO)
-
-Mix precision \cite{abdulah_accelerating_2022}
-
-Compression (pegar a citação da compressão)
-
-Com facilidade
-
-(nesse ponto o reuso do ERAD é bom, claro que ele está reduzido, mas é útil notheless)
+O restante do PEP está organizado da seguinte forma. Na seção \ref{cap:objetivos} é elaborado sobre objetivos e quais são os resultados esperados durante o mestrado. Na seção \ref{cap:metodologia} é explicado como espera-se obter esses resultados. Na seção \ref{cap:resultados} é discorrido sobre os resultados já obtidos até a escrita e submissão deste PEP. Por fim, as seções \ref{cap:cronograma} e \ref{cap:conclusao} contém o cronograma e conclusão respectivamente.
 
 
 \chapter{Objetivos e Resultados Esperados}
 \label{cap:objetivos}
 
-** O que queremos com isso?
+É importante que este mestrado consiga gerar um progama de RTM usando STF competitivo com as implementações convencionáis da indústria, como MPI+CUDA. A métrica utilizada para testar a performance de uma aplicação RTM é Msamples/s, ou quantos pontos do volume são computados por segundo. Ela é calculada divindo o número total de pontos no volume pela soma do tempo total gasto na computação do volume, descontando gastos não relacionados, como escrita em disco. A meta mais precisamente é, então, obter uma métrica de Msamples/s superior ao programa base \FletchBase com um mesmo volume e condições de computação. Atualmente, essa implementação só se extende a CUDA, não implementando MPI. Pode-se obter acesso a implementações MPI+CUDA, baseadas no \FletchBase, porém a execução deste requer ou acesso a um super computador ou uma melhora na estrutura de rede do PCAD. Essa implementação é segmentada, colocando o espaço em mais de um nodo, que seria uma implementação comparável a execução do \StarFletch.
 
-Demonstrar que uma implementação de RTM usando STF em primeira ordem é competitivo e possivelmente superior com implementações MPI-CUDA do mesmo programa. Além disso, mesmo com ganhos marginais, demonstrar a simplicidade do sistema STF em orquestrar grandes execuções.
+Espera-se então obter métricas de Msamples/s superiores aos programas base, adicionando melhoras em capacidade de volume e escalabilidade mais automática para arquiteturas diferentes. Mesmo com ganhos marginhas na métrica, a implementação do \StarFletch seria muito mais portável e expandível do que as convencionais, pois ao adicionar um novo processador com uma nova arquitetura, pode-se apenas programar mais uma task com as caracteristicas desta e adicionar ao programa. Isso não só é uma forma simples e não destrutiva de adicionar suporte, como dá a capacidade do programa de rodar com nodos ainda mais heterogêneos.
 
-** Quais resultados esperamos obter?
-
-A métrica utilizada na industria é Msamples/s processadas. Esperamos obter uma quantidade superior de Msamples/s do que as versões mais tradicionais do fletcher, assim como possibilitar execuções maiores que utilizem os recursos totais mais eficientemente e mais plenamente, com menos configuração.
 
 \chapter{Metodologia do Trabalho}
 \label{cap:metodologia}
 
-** Como iremos obter esses resultados?
+Os resultados serão obtidos usando a infraestrutura do PCAD\footnote{Página do PCAD da INF/UFRGS - \url{https://gppd-hpc.inf.ufrgs.br/}}. Experimentos em CPU tem usado as máquinas \texttt{poti}, \texttt{cei} e \texttt{draco}. Para os experimentos usando GPU, apenas a \texttt{poti} será reusada, tendo que acessar máquinas como \texttt{tupi}, \texttt{saude}, \texttt{cidia} e \texttt{beagle}. Essas últimas 3 são multiGPU e permitem testes de escalonadores do StarPU.
 
-Usando o PCAD. Talvez o Santos Dumond
+Como comentado na seção \ref{cap:objetivos}, pretende comparar com execuções multimáquina do programa base, sendo necessária a execução no super computador Santos Dumond\footnote{LINK}. A execução no super computador seria ótima para adicionar embasamento nos dados gerados e mostrar um campo competitivo para o programa.
 
-\chapter{Progresso Atual e Cronograma}
-\label{cap:cronograma}
+\chapter{Resultados Parciais}
+\label{cap:resultados}
 
 ** O que já foi feito?
 
@@ -205,6 +187,10 @@ Como isso afeta o scheaduling de execuções em CPU? Será que elas ser tornarã
 
 Ou seja, primeiro temos que implementar a versão trivial e compara-lá com a versão em GPU do Fletcher-Base. Analisar os dados e bifurcar a partir desse ponto. Realizar a implementação com packing se a task na GPU está muito lenta, adicionar segmentação em blocos CPU se eles estão segurando a execução, assim como outras ideias que podem surgir.
 
+\chapter{Cronograma}
+\label{cap:cronograma}
+
+
 ** Quando iremos realizar as tarefas?
 
 Man, idk.
@@ -212,16 +198,15 @@ Man, idk.
 \chapter{Conclusão}
 \label{cap:conclusao}
 
-** Considerações sobre o trabalho e velocidade de desenvolvimento.
+O mestrado visa gerar o programa \StarFletch, uma implementação em STF do algoritmo Fletcher de RTM. Espera-se gerar métricas competitivas com as implementações da indústria, adicionando os benefícios que o modelo STF, e mais especificamente o StarPU, fornecem.
 
-Mencionar o trabalho de professor.
+O progresso a partir do mês de março se tornou mais lento devido a posição que eu assumi como professor substituto. Ele tomando parte do meu expediente na UFRGS para lecionar as aulas, ocorrendo de segunda a quinta, das 15h30 até as 17h10, assim como fora das premissas da instituição, tendo que preparar as aulas e materiais.
 
-Mencionar a viagem para a França e o projeto associado.
+Agora em maio irei apresentar no ERAD um artigo do progresso parcial do \StarFletch, falando das facilidades de implementar otimizações de IO e divisões em função do tempo. Na metade do mês de junho irei viajar a França com o meu orientador, Lucas Mello Schnorr, para participar de um intensivo sobre uma ferramenta que ele está desenvolvendo. A pesquisa é tangencial ao meu projeto, conectando na parte de análise de dados, mas não sei como isso, e se isso, irá me auxiliar ou me atrapalhar no cronograma.
+
+Acredito que consiga ter um resultado satisfatório até o final do ano, se não antes disso.
 
 
-
-
-% Appendices start with \appendix (optional \annexname for annexes)
 \appendix
 
 \chapter{Exemplo de Apêndice}
