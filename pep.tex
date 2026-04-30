@@ -22,6 +22,12 @@
 % For figure inclusion
 \usepackage{graphicx}
 
+
+\usepackage{booktabs} % Para linhas horizontais de melhor qualidade
+\usepackage{xltabular} % Para colunas com largura ajustável
+\usepackage{multirow}
+\usepackage{geometry}
+
 % Optionally load math packages
 % \usepackage{amsmath}
 
@@ -31,8 +37,8 @@
 %------------------------------------------------------------------------------
 % Document metadata
 %------------------------------------------------------------------------------
-\title{Título PEP TBD }
-\translatedtitle{Title PEP TBD}
+\title{Implementação do algoritmo de migração reversa no tempo com paralelismo de tarefas em primeira ordem.}
+\translatedtitle{Implementation of the algorithm of reverse time migration with task parallelism in first order.}
 
 % Author: \author{Surname}{First Name(s)}
 \author{Boniatti Colle}{Pedro Henrique}
@@ -54,13 +60,13 @@
 % Keywords — use Title Case; up to 10 keywords per language
 %------------------------------------------------------------------------------
 % TODO:
-\keyword{Ciência da Computação}
-\keyword{Formatação de documentos}
-\keyword{LaTeX}
+\keyword{Migração Reversa no Tempo}
+\keyword{Fluxo de Tarefas Sequencial}
+\keyword{Computação de Alta Performance}
 
-\translatedkeyword{Computer Science}
-\translatedkeyword{Document formatting}
-\translatedkeyword{LaTeX}
+\translatedkeyword{Reverse Time Migration}
+\translatedkeyword{Sequential Task Flow}
+\translatedkeyword{High Performance Computing}
 
 %------------------------------------------------------------------------------
 % Nominata — override individual fields if the bundled defaults are stale.
@@ -81,25 +87,29 @@
 %------------------------------------------------------------------------------
 % TODO:
 \begin{dedicatoria}
-  À minha família.
+  À minha família, aos meus amigos.
+
+  À Sofia.
+
+  Ao Chico.
 \end{dedicatoria}
 
 \begin{agradecimentos}
-  Agradeço a todos que contribuíram para a realização deste trabalho.
+	Agradeço ao Professor Lucas Mello Schnorr por me escolher para ser seu mestrando e me providenciar esse projeto extremamente interessante. Agradeço aos meus colegas de laboratório, principalmente ao Otho por me ajudar a debugar. Agradeço ao Vinicius e João Pedro pela companhia nos almoços e nos chás. Agradeço a Sofia por todo o conforto e felicidade que me providencia.
 \end{agradecimentos}
 
 %------------------------------------------------------------------------------
 % Abstract in the primary language
 %------------------------------------------------------------------------------
 \begin{abstract}
-	Resumo em português
+	Com o ecossistema cada vez mais complexo de Computação de Alto Desempenho (HPC), o modelo de Fluxo de Tarefas Sequenciais (STF) surge para fornecer uma interface conveniente para computação em arquiteturas heterogêneas. Este plano de ensino e pesquisa (PEP) apresenta o Star-Fletcher, um programa de Migração Temporal Reversa (RTM) implementado usando STF. Motivação, metodologia e cronograma são estabelecidas neste trabalho e o progresso atual é discorrido.
 \end{abstract}
 
 %------------------------------------------------------------------------------
 % Abstract in the second language (translatedabstract)
 %------------------------------------------------------------------------------
 \begin{translatedabstract}
-	In english
+	With the evermore complex ecosystem of High Performance Computing (HPC), the Sequential Task Flow (STF) model arrives to provide a convenient interface to compute in heterogeneous architectures. This paper presents the plan for the develop of Star-Fletcher, a Reverse Time Migration (RTM) program implemented using the STF model. Motivation, metodology and timeline are established in this work and the current progress is discussed.
 \end{translatedabstract}
 
 %------------------------------------------------------------------------------
@@ -113,16 +123,14 @@
 
 % Optional: list of abbreviations
 \begin{listofabbrv}{UFRGS}
-  \item[ABNT] Associação Brasileira de Normas Técnicas
-  \item[INF]  Instituto de Informática
-  \item[PPGC] Programa de Pós-Graduação em Computação
-  \item[UFRGS] Universidade Federal do Rio Grande do Sul
+  \item[STF] Fluxo de Tarefas Sequencial (\textit{Sequential Task Flow})
+  \item[RTM]  Migração Reversa no Tempo (\textit{Reverse Time Migration})
+  \item[IO] Entrada/Saída (\textit{Input/Output})
+  \item[CPU] Unidade Central de Processamento (\textit{Central Processing Unit})
+  \item[GPU] Unidade Gráfica de Processamento (\textit{Graphical Processing Unit})
+  \item[CFD] Computação de Dinâmica de Fluidos (\textit{Computational Fluid Dynamics}) 
+  \item[PEP] Plano de Estudos e Pesquisa
 \end{listofabbrv}
-
-% Optional: list of symbols
-% \begin{listofsymbols}{$\alpha$}
-%   \item[$\alpha$] Alpha coefficient
-% \end{listofsymbols}
 
 \chapter{Introdução e Motivação}
 \label{cap:introducao}
@@ -133,11 +141,11 @@ Uma das soluções desse problema são os modelos de fluxo de tarefas sequenciai
 
 O modelo STF já foi utilizado com sucesso em programas de diferentes domínios como resolvedores de álgebra linear densa \cite{abdulah_accelerating_2022}, computação de dinâmica de fluidos (CFD - \textit{Computational Fluid Dynamics}) \cite{couteyen_carpaye_design_2018,leandro_nesi_task-based_2020} e aplicações de migração reversa no tempo (RTM - \textit{Reverse Time Migration}) para análise sísmica \cite{boillot_task-based_2014,alonazi_asynchronous_2019}. Esse último caso, trata-se de um algoritmo usado na exploração de óleo e gás para encontrar depósitos subsuperficiais de recursos geológicos, tal qual óleo e gás. Nele, ondas gravadas por geofones em campo são reproduzidas e propagadas em função do tempo. O estado computado é periodicamente salvo. Depois de $n$ execuções, executa-se na direção contrária ao tempo, reproduzindo os estados salvos e movendo a onda contra o tempo. No fim, obtém-se uma imagem parcial do espaço analisado. Esse processo é repedido várias vezes, sendo cada uma chamada de \textit{shot}, e, no fim, as imagens parciais são combinadas em uma visualização final do meio estudado, podendo-se então localizar com precisão depósitos subsuperficiais de gás ou óleo.
 
-Mesmo com a análise sísmica passando de 100 anos e computadores de 80, aplicações RTM só começaram a se popularizar na indústria nos últimos 20 anos por serem muito intensivas computacionalmente. A computação de diferenças finitas sobre volumes pode abranger bilhões de pontos, com cada um consistindo de várias operações consecutivas. Um volume de $1024 \times 1024 \times 1024$, aproximadamente 1 bilhão de pontos, guardado em precisão dupla consiste em $8Gb$ de dados. Esse volume de dados e a necessidade de salvar o estado periodicamente torna a aplicação \textit{IO bounded}. Felizmente, aplicações RTM são trivialmente paralelizáveis entre \textit{shots}, não havendo dependência de dados entre eles. O formato de execução desses programas é, então, distribuir um \textit{shot} para cada nodo em um parque de alto desempenho, computando as diferenças finitas em GPU. Tudo isso requer a coordenação manual da transferência de dados da memória principal a disco, e vice-versa, além de limitar a computação de um \textit{shot} por nodo.
+Mesmo com a análise sísmica passando de 100 anos e computadores de 80, aplicações RTM só começaram a se popularizar na indústria nos últimos 20 anos por serem muito intensivas computacionalmente. A computação de diferenças finitas sobre volumes pode abranger bilhões de pontos, com cada um consistindo em várias operações consecutivas. Um volume de $1024 \times 1024 \times 1024$, aproximadamente 1 bilhão de pontos, guardado em precisão dupla consiste em $8Gb$ de dados. Esse volume de dados e a necessidade de salvar o estado periodicamente torna a aplicação \textit{IO bounded}. Felizmente, aplicações RTM são trivialmente paralelizáveis entre \textit{shots}, não havendo dependência de dados entre eles. O formato de execução desses programas é, então, distribuir um \textit{shot} para cada nodo em um parque de alto desempenho, computando as diferenças finitas em GPU. Tudo isso requer a coordenação manual da transferência de dados da memória principal a disco, e vice-versa, além de limitar a computação de um \textit{shot} por nodo.
 
-Este trabalho apresenta \StarFletch, uma implementação de paralelismo de tarefas em primeira ordem para arquiteturas heterogêneas para solucionar problemas de RTM. O intuito dele é, através do uso da interface do StarPU, simplificar a comunicação de dados, permitindo a execução de \textit{shots} multi-nodo. Por motivos de simplificação, \StarFletch\ implementa o algoritmo Fletcher \cite{fletcher_reverse_2009} apenas em função do tempo. Para simular a possível próxima etapa, os volumes são salvos em disco, representando o armazenamento para a futura etapa de propagação contrária ao tempo. Essa decisão veio de já existir essa base de meio RTM como um objeto de estudo no INF, permitindo gerar avaliações comparativas de desempenho da versão base, cunhada \FletchBase, com a nova implementação STF, \StarFletch. O intuito final é aumentar as capacidades dos algoritmos RTM, gerando execuções mais rápidas que os modelos padrões da indústria de execução MPI+CUDA.
+Este trabalho apresenta \StarFletch, uma implementação de um programa RTM usando paralelismo de tarefas em primeira ordem para arquiteturas heterogêneas. O intuito dele é, através do uso da interface do StarPU, simplificar a comunicação de dados, permitindo a execução de \textit{shots} multi-nodo e fácil adaptação para qualquer parque de alto desenpenho. Por motivos de simplificação, \StarFletch\ implementa o algoritmo Fletcher \cite{fletcher_reverse_2009} apenas em função do tempo. Para simular a possível próxima etapa, os volumes são salvos em disco, representando o armazenamento para a futura etapa de propagação contrária ao tempo. Essa decisão é herdada da implementação em que \StarFletch\ se baseia, cunhada \FletchBase, que implementa o paralelismo do algortimo usando vários métodos convencionais, como CUDA, OpenMP e OpenACC. A vantagem disso é que se obtém uma base para comparar os resultados obtidos pelo \StarFletch. Há outras implementações, baseadas também no \FletchBase, que implementam paralelismo multi-node com MPI, que será usado para testes futuros. O intuito final é aumentar as capacidades dos algoritmos RTM, gerando execuções mais rápidas que os modelos padrões da indústria de execução MPI+CUDA, sendo demonstrado como uma superioridade numérica os programas base escolhidos.
 
-Um efeito colateral do uso do paradigma STF é simplicidade de implementações de otimizações de IO e de segmentação de espaço. Para o IO, o gerenciamento de memória e o escalonador permitem implementar tarefas de escrita do volume que não travam a execução do sistema todo, atingido IO assíncrono apenas seguindo o formato de um programa em STF. Esse é o tópico do meu artigo enviado ao ERAD/RS 2026\footnote{How STF allows trivial overlap of I/O and computations on Forward RTM - Página do evento: \url{https://cradrs.github.io/eradrs2026/}}, ainda não publicado na data do envio do PEP. Mais interessante que as otimizações de IO são as otimizações com respeito a segmentação em função do tempo \cite{krishnamoorthy_effective_2007,grosser_hybrid_2018,akbudak_asynchronous_2020,qu_toward_2021,qu_exploiting_2023}. Essa otimização, também conhecida como \textit{time tiling}, segmenta o tempo em blocos com o fim de aumentar a reutilização de dados e os acertos na \textit{cache}. Em programas de \textit{stencil}, caso do RTM, isso é feito manualmente, concedendo mais de uma iteração a uma \textit{thread} que computa um certo segmento do espaço. Essa divisão é mais difícil e gera blocos heterogêneos em que alguns podem ir computando enquanto outras devem esperar para ser computados. Isso gera uma diferença de carga em que algumas \textit{threads} conseguem computar mais rápido que outras dependendo do segmento computado. O StarPU realiza balanceamento de carga, mitigando esse problema. Além disso, devido a sua gerência automática de memória, o espaço do tempo que cada tarefa computa por ser arbitrariamente grande, não requerendo configurações excessivas por parte do programador. (Péssimo parágrafo, editar.)
+Um efeito colateral do uso do paradigma STF é simplicidade de implementações de otimizações de IO e de segmentação de espaço. Para o IO, o gerenciamento de memória e o escalonador permitem implementar tarefas de escrita do volume que não travam a execução do sistema todo, atingido IO assíncrono apenas seguindo o formato de um programa em STF. Esse é o tópico do meu artigo enviado ao ERAD/RS 2026\footnote{How STF allows trivial overlap of I/O and computations on Forward RTM - Página do evento: \url{https://cradrs.github.io/eradrs2026/}}, ainda não publicado na data do envio do PEP. Mais interessante que as otimizações de IO são as otimizações com respeito a segmentação em função do tempo \cite{krishnamoorthy_effective_2007,grosser_hybrid_2018,akbudak_asynchronous_2020,qu_toward_2021,qu_exploiting_2023}. Essa otimização, também conhecida como \textit{time tiling}, segmenta o tempo em blocos com o fim de aumentar a reutilização de dados e os acertos na \textit{cache}. Em programas de \textit{stencil}, caso do RTM, isso é feito manualmente, concedendo mais de uma iteração a uma \textit{thread} que computa um certo segmento do espaço. Essa divisão é mais difícil e gera blocos heterogêneos, causando uma possível diferença de carga entre as ferramentas de paralelismo do programa. O StarPU realiza balanceamento de carga, mitigando esse problema. Além disso, devido a sua gerência automática de memória, o espaço do tempo que cada tarefa computa por ser arbitrariamente grande, não requerendo configurações excessivas por parte do programador. Isso quer dizer que a implementação do \StarFletch\ tem muito espaço disponível para implementar otimizações, facilitadas pelo modelo STF.
 
 O restante do PEP está organizado da seguinte forma. Na seção \ref{cap:objetivos} é elaborado sobre objetivos e quais são os resultados esperados durante o mestrado. Na seção \ref{cap:metodologia} é explicado como espera-se obter esses resultados. Na seção \ref{cap:resultados} é discorrido sobre os resultados já obtidos até a escrita e submissão deste PEP. Por fim, as seções \ref{cap:cronograma} e \ref{cap:conclusao} contém o cronograma e conclusão respectivamente.
 
@@ -145,7 +153,7 @@ O restante do PEP está organizado da seguinte forma. Na seção \ref{cap:objeti
 \chapter{Objetivos e Resultados Esperados}
 \label{cap:objetivos}
 
-É importante que este mestrado consiga gerar um programa de RTM usando STF competitivo com as implementações convencionais da indústria, como MPI+CUDA. A métrica utilizada para testar o desempenho de uma aplicação RTM é Msamples/s, ou quantos pontos do volume são computados por segundo. Ela é calculada dividindo o número total de pontos no volume pela soma do tempo total gasto na computação do volume, descontando gastos não relacionados, como escrita em disco. A meta mais precisamente é, então, obter uma métrica de Msamples/s superior ao programa base \FletchBase com um mesmo volume e condições de computação. Atualmente, essa implementação só se estende a CUDA, não implementando MPI. Pode-se obter acesso a implementações MPI+CUDA, baseadas no \FletchBase, porém a execução deste requer ou acesso a um super computador, ou uma melhora na estrutura de rede do PCAD. Essa implementação é segmentada, colocando o espaço em mais de um nodo, que seria uma implementação comparável a execução do \StarFletch.
+É importante que este mestrado consiga gerar um programa de RTM usando STF competitivo com as implementações convencionais da indústria, como MPI+CUDA. A métrica utilizada para testar o desempenho de uma aplicação RTM é Msamples/s, ou quantos pontos do volume são computados por segundo. Ela é calculada dividindo o número total de pontos no volume pela soma do tempo total gasto na computação do volume, descontando gastos não relacionados, como escrita em disco. A meta mais precisamente é, então, obter uma métrica de Msamples/s superior ao programa base \FletchBase com um mesmo volume e condições de computação. Atualmente, essa implementação só se estende a CUDA, não implementando MPI. A implementação MPI+CUDA, baseadas no \FletchBase\ e comentada na sessão \ref{cap:introducao}, está disponível como base para o domínio multi-nodo, porém a execução deste requer ou acesso a um super computador, ou uma melhora na estrutura de rede do PCAD, estando a merce desses aspectos para a progressão comparativa a multi-nó. Essa implementação é segmentada, colocando o espaço em mais de um nodo, que seria uma implementação comparável a execução do \StarFletch.
 
 Espera-se então obter métricas de Msamples/s superiores aos programas base, adicionando melhoras em capacidade de volume e escalabilidade mais automática para arquiteturas diferentes. Mesmo com ganhos marginas na métrica, a implementação do \StarFletch seria muito mais portável e expansível do que as convencionais, pois ao adicionar um novo processador com uma nova arquitetura, pode-se apenas programar mais uma tarefa com as características desta e adicionar ao programa. Isso não só é uma forma simples e não destrutiva de adicionar suporte, como dá a capacidade do programa de rodar com nodos ainda mais heterogêneos.
 
@@ -160,37 +168,70 @@ Como comentado na seção \ref{cap:objetivos}, pretende comparar com execuções
 \chapter{Resultados Parciais}
 \label{cap:resultados}
 
-** TODO **
+Nos oito meses anteriores a escrita deste PEP, o \StarFletch foi implementado, usando o StarPU, para computações em CPU. Essa implementação parcial já demarca um grande progresso, pois as implementações CUDA e, posteriormente, MPI, serão apenas adições ao programa, sem acarretar refatorações da estrutura. Essa versão apenas CPU já foi usada para o artigo publicado no ERAD e é promissor no mascaramento do IO. 
 
-** O que já foi feito?
+A implementação consta com uma segmentação espacial do domínio, separando-o em blocos. Para processá-los, cada bloco é submetido a uma tarefa que depende dos blocos vizinhos e dele mesmo da iteração anterior. Nisso, uma nova iteração é computada. Essas iterações estão modeladas para que $n$ iterações arbitrárias possam ser guardadas, permitindo uma forma de \textit{time tiling}, cuja memória é gerida automaticamente pelo StarPU. 
 
-Implementado o Sistema RTM \textit{CPU only} usando o STF do StarPU
+Uma desvantagem da implementação atual é que a métrica da indústria, mega amostras por segundo (Msamples/s \textit{mega samples per second}), só considera tempo em que o kernel está computando, desconsiderando outros custos computacionais. Isso afeta a métrica gerada pelo \StarFletch, pois na modelagem de tarefas, gravar o tempo do kernel para cada trabalhador é complexo, e a submissão de tarefas, operações de IO e computação do kernel são todas entrelaçadas durante a execução. No quesito análise comparativa, podemos desligar o IO para obter métricas mais próximas, mas não é 100\% equivalente. Pode-se desenvolver um mecanismo complexo para rastrear esses dados, ou pode-se mostrar a discrepância entre o tempo de execução real e os Msamples/s reportados. 
 
-Realizado testes comparativos em \textit{CPU only} com uma implementação com paralelismo OpenMP, averiguando uma paridade de desempenho.
+Para esse PEP, realizou-se essa análise comparativas dos programas da computação em CPU, gerando métricas. 
+** Análise do Gráfico ** 
 
-** O que ainda temos que realizar?
+** TODO, FALTOU O GRÁFICO ;-; - Fica pra quinta **
 
-Finalizar os testes de Msamples/s para a execução só em CPU do Star-Fletcher.
 
-Implementar em GPU a execução do Star-Fletcher.
 
-Implementar execução MPI para o programa. Sendo essa mais distante, não sei quais desafios serão encontrados. A expectativa é que o StarPU seja capaz de mascarar as comunicações, não fazendo necessária a implementação de um sistema de halo ou associado, que aumentaria o tempo de desenvolvimento e a complexidade.
+Ainda há trabalho pela frente. A implementação do \FletchBase\ em GPU já está rodando no PCAD, tendo entendido a compilação e utilização de pacotes CUDA no parque. Com isso, falta adicionar implementações CUDA no \StarFletch\ e verificar o resultado comparativo. A implementação inicial tenderá a algo bem simples, bem próximo a portar a implementação do kernel de CPU um para um. Com a análise de dados há vários caminhos a se tomar, se já for melhor que o \FletchBase, pode-se seguir para a implementação MPI. Caso não, o progresso depende da razão. Pode-se mudar a implementação do algoritmo CUDA, mudar o escalonamento, transferência de memória, etc. Essas decisões e direções a tomar serão reveladas a medida que experimentos com a versão com GPU do \StarFletch\ forem feitos.
 
-*** Considerações da implementação em GPU
-
-Qual o melhor modo de passar a execução? Usar a função tal qual está ou fazer um packing dos dados antes de mandar para a GPU?
-
-Como isso afeta o scheaduling de execuções em CPU? Será que elas ser tornarão um bottleneck? Se sim, há como fazer a segmentação dinâmica para a CPU. Será necessária essa implementação?
-
-Ou seja, primeiro temos que implementar a versão trivial e compara-lá com a versão em GPU do Fletcher-Base. Analisar os dados e bifurcar a partir desse ponto. Realizar a implementação com packing se a task na GPU está muito lenta, adicionar segmentação em blocos CPU se eles estão segurando a execução, assim como outras ideias que podem surgir.
+A implementação MPI apresenta ainda mais incógnitas. Não só deve-se implementar, como deve-se aprender e entender as características do MPI. Pela documentação do StarPU, e as capacidades descritas, essa implementação deve ser simples, porém é a etapa na qual pode haver o menor ou maior tempo gasto, dependendo do que o futuro mostrar.
 
 \chapter{Cronograma}
 \label{cap:cronograma}
 
+O cronograma está ajustado em semanas e consta até o final do ano, a expectativa de conclusão do Mestrado.
 
-** Quando iremos realizar as tarefas?
+\noindent
+\begin{xltabular}{\textwidth}{@{} l l X @{}}
+\toprule
+\textbf{Semana} & \textbf{Início (Segunda)} & \textbf{Atividades / Objetivos} \\ \midrule
+Semana 1  & 04/05/2026 &  Preparações para o ERAD/RS e ida a Bagé do dia 6 a 9 de maio.\\ \midrule
+Semana 2  & 11/05/2026 & \multirow{4}{4in}{Adição da implementação CUDA ao \StarFletch. Realização de teste com o \FletchBase\ e realização de iterações sobre o design.} \\ \cmidrule{1-2}
+Semana 3  & 18/05/2026 &  \\ \cmidrule{1-2}
+Semana 4  & 25/05/2026 &  \\ \cmidrule{1-2}
+Semana 5  & 01/06/2026 &  \\ \midrule
+Semana 6  & 08/06/2026 &  Agregação dos experimentos realizados e escrita sobre os resultados obtidos até agora. \\ \midrule
+Semana 7  & 15/06/2026 &  Continuidade na escrita. Viagem para a França na quinta dia 18.\\ \midrule
+Semana 8  & 22/06/2026 &  Estadia na França.\\ \midrule
+Semana 9  & 29/06/2026 & \multirow{5}{4in}{Período de implementação MPI e testes com MPI. \\Nesse período uma das semanas será usada como recesso.} \\ \cmidrule{1-2}
+Semana 10 & 06/07/2026 &  \\ \cmidrule{1-2}
+Semana 11 & 13/07/2026 &  \\ \cmidrule{1-2}
+Semana 12 & 20/07/2026 &  \\ \cmidrule{1-2}
+Semana 13 & 27/07/2026 &  \\ \midrule
+Semana 14 & 03/08/2026 &  Começo do período letivo 26/2. Se tudo der certo ainda estarei lecionando. Essa data serve de meta. Idealmente, neste ponto tempos o \StarFletch implementado com CUDA e MPI, com experimentos já realizados sobre a eficácia da atual implementação. \\ \midrule
+Semana 15 & 10/08/2026 &  \\ \cmidrule{1-2}
+Semana 16 & 17/08/2026 &  \\ \cmidrule{1-2}
+Semana 17 & 24/08/2026 &  \\ \cmidrule{1-2}
+Semana 18 & 31/08/2026 &  \\ \cmidrule{1-2}
+Semana 19 & 07/09/2026 &  \\ \cmidrule{1-2}
+Semana 20 & 14/09/2026 &  \\ \cmidrule{1-2}
+Semana 21 & 21/09/2026 &  \\ \cmidrule{1-2}
+Semana 22 & 28/09/2026 &  \\ \cmidrule{1-2}
+Semana 23 & 05/10/2026 & Escrita da tese de mestrado\\ \cmidrule{1-2} 
+Semana 24 & 12/10/2026 & e iteração sobre o \StarFletch.\\ \cmidrule{1-2}
+Semana 25 & 19/10/2026 &  \\ \cmidrule{1-2}
+Semana 26 & 26/10/2026 &  \\ \cmidrule{1-2}
+Semana 27 & 02/11/2026 &  \\ \cmidrule{1-2}
+Semana 28 & 09/11/2026 &  \\ \cmidrule{1-2}
+Semana 29 & 16/11/2026 &  \\ \cmidrule{1-2}
+Semana 30 & 23/11/2026 &  \\ \cmidrule{1-2}
+Semana 31 & 30/11/2026 &  \\ \cmidrule{1-2}
+Semana 32 & 07/12/2026 &  \\ \midrule
+Semana 33 & 14/12/2026 &  Fim do período letivo dia 19/12. \\ \midrule
+Semana 34 & 21/12/2026 &  \multirow{2}{1in}{Recesso de Fim de Ano} \\ 
+Semana 35 & 28/12/2026 &  \\
+\bottomrule
+\end{xltabular}
 
-Man, idk.
 
 \chapter{Conclusão}
 \label{cap:conclusao}
@@ -203,18 +244,12 @@ Agora em maio irei apresentar no ERAD um artigo do progresso parcial do \StarFle
 
 Acredito que consiga ter um resultado satisfatório até o final do ano, se não antes disso.
 
-
-\appendix
-
-\chapter{Exemplo de Apêndice}
-
-Apêndices contêm material elaborado pelo próprio autor.
-
-\annex
-
-\chapter{Exemplo de Anexo}
-
-Anexos contêm material de terceiros reproduzido para documentação.
+%\appendix
+%\chapter{Exemplo de Apêndice}
+%Apêndices contêm material elaborado pelo próprio autor.
+%\annex
+%\chapter{Exemplo de Anexo}
+%Anexos contêm material de terceiros reproduzido para documentação.
 
 %------------------------------------------------------------------------------
 % References (ABNT author-date style)
