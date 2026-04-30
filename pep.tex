@@ -174,11 +174,25 @@ A implementação consta com uma segmentação espacial do domínio, separando-o
 
 Uma desvantagem da implementação atual é que a métrica da indústria, mega amostras por segundo (Msamples/s \textit{mega samples per second}), só considera tempo em que o kernel está computando, desconsiderando outros custos computacionais. Isso afeta a métrica gerada pelo \StarFletch, pois na modelagem de tarefas, gravar o tempo do kernel para cada trabalhador é complexo, e a submissão de tarefas, operações de IO e computação do kernel são todas entrelaçadas durante a execução. No quesito análise comparativa, podemos desligar o IO para obter métricas mais próximas, mas não é 100\% equivalente. Pode-se desenvolver um mecanismo complexo para rastrear esses dados, ou pode-se mostrar a discrepância entre o tempo de execução real e os Msamples/s reportados. 
 
-Para esse PEP, realizou-se essa análise comparativas dos programas da computação em CPU, gerando métricas. 
-** Análise do Gráfico ** 
+Para esse PEP, realizou-se essa análise comparativas dos programas da computação em CPU, gerando métricas. O \StarFletch\ foi executado com uma entrada de $120 \times 120 \times 120$, variando o tamanho do bloco. Esse tamanho de entrada foi escolhido, pois é suficiente para saturar os processadores e obter resultados equivalentes a volumes maiores, porém em menos tempo. Com a limitação da medição, realizou-se todos os casos com e sem IO. Como comparativo, executou a mesma entrada no \FletchBase, para obter uma métrica comparativa a execução convencional. O experimento foi executado no PCAD, usando as máquinas cei2 (2 x Intel(R) Xeon(R) Silver 4116, 2.1 GHz, 48 threads, 24 cores), draco1 (2 x Intel(R) Xeon(R) E5-2640 v2, 2.0 GHz, 32 threads, 16 cores) e poti1(Intel(R) Core(TM) i7-14700KF, 3.4 GHz, 28 threads, 20 cores).
 
-** TODO, FALTOU O GRÁFICO ;-; - Fica pra quinta **
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{comparacao-base-starpu-io-0.pdf}
+    \caption{Msamples/s por tamanho de bloco do \StarFletch\ em uma execução fixa de $120^3$ pontos sem operações de IO. As linhas representam a execução do \FletchBase\ para a mesma entrada.}
+    \label{img:graph1}
+\end{figure}
 
+Observa-se na Figura \ref{img:graph1} que o desenpenho com o tamanho ideal de bloco do \StarFletch\ não superou a execução do \FletchBase nas máquinas cei2 e draco1. Ela é marcada no gráfico pelas linhas pontilhadas, com a vermelha sendo a média das execuções e as rosas o máximo e o mínimo. Nos dois casos, a execução foi próxima o suficiente para que a submissão de tarefas afete significativamente a saída. Para a poti1, devido a sua arquitetura de núcleos heterogêneos, o StarPU conseguiu escalonar muito melhor que o OpenMP. 
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{comparacao-base-starpu-io-1.pdf}
+    \caption{Msamples/s por tamanho de bloco do \StarFletch\ em uma execução fixa de $120^3$ pontos com operações de IO. As linhas representam a execução do \FletchBase\ para a mesma entrada.}
+    \label{img:graph2}
+\end{figure}
+
+A Figura \ref{img:graph2} consta a exata mesma execução que acima, porém com o IO ligado. Nota-se que não há uma queda significativa no desempenho do \StarFletch, pois este está entrelaçando a saída a disco com as computações. Lembrando que o \FletchBase não contabiliza o tempo de IO na sua métrica final de Msamples/s, que não é possível na versão atual do \StarFletch. Mais análise deve ser feita para realizar conclusões mais robustas do desempenho do \StarFletch\ quanto ao \FletchBase, mas os números significativos só virão a aparecer quando CUDA for implementado.
 
 
 Ainda há trabalho pela frente. A implementação do \FletchBase\ em GPU já está rodando no PCAD, tendo entendido a compilação e utilização de pacotes CUDA no parque. Com isso, falta adicionar implementações CUDA no \StarFletch\ e verificar o resultado comparativo. A implementação inicial tenderá a algo bem simples, bem próximo a portar a implementação do kernel de CPU um para um. Com a análise de dados há vários caminhos a se tomar, se já for melhor que o \FletchBase, pode-se seguir para a implementação MPI. Caso não, o progresso depende da razão. Pode-se mudar a implementação do algoritmo CUDA, mudar o escalonamento, transferência de memória, etc. Essas decisões e direções a tomar serão reveladas a medida que experimentos com a versão com GPU do \StarFletch\ forem feitos.

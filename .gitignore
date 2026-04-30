@@ -11,5 +11,6 @@ erad-paper.tex
 *.blg
 *.fdb_latexmk
 *.fls
+*.dvi
 *.synctex*
 .vscode
